@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
     Plus,
@@ -42,6 +43,24 @@ const getAuthHeaders = () => {
     };
 };
 
+// Check whether a user belongs to the HR role
+const isHRUser = (user) => {
+    const role = String(
+        user?.role ||
+        user?.userRole ||
+        user?.accountType ||
+        ""
+    )
+        .trim()
+        .toLowerCase();
+
+    return (
+        role === "hr" ||
+        role === "hr manager" ||
+        role === "human resources"
+    );
+};
+
 function Projects() {
     const [projects, setProjects] = useState([]);
     const [employees, setEmployees] = useState([]);
@@ -59,6 +78,11 @@ function Projects() {
 
     const [deleteProject, setDeleteProject] = useState(null);
     const [deleting, setDeleting] = useState(false);
+
+    // Only non-HR users can be assigned to projects
+    const eligibleTeamMembers = employees.filter(
+        (employee) => !isHRUser(employee)
+    );
 
     // Fetch projects and employees
     const fetchData = async () => {
@@ -112,17 +136,31 @@ function Projects() {
     const handleEditProject = (project) => {
         setEditingProject(project);
 
+        // Get only eligible employee IDs.
+        // Previously assigned HR users will be excluded.
+        const eligibleIds = new Set(
+            eligibleTeamMembers.map((member) => String(member._id))
+        );
+
+        const selectedMembers = (project.teamMembers || [])
+            .map((member) =>
+                typeof member === "string" ? member : member?._id
+            )
+            .filter(
+                (id) => id && eligibleIds.has(String(id))
+            );
+
         setFormData({
             name: project.name || "",
             description: project.description || "",
             clientName: project.clientName || "",
-            teamMembers: (project.teamMembers || [])
-                .map((member) =>
-                    typeof member === "string" ? member : member?._id
-                )
-                .filter(Boolean),
-            startDate: project.startDate ? project.startDate.slice(0, 10) : "",
-            dueDate: project.dueDate ? project.dueDate.slice(0, 10) : "",
+            teamMembers: selectedMembers,
+            startDate: project.startDate
+                ? project.startDate.slice(0, 10)
+                : "",
+            dueDate: project.dueDate
+                ? project.dueDate.slice(0, 10)
+                : "",
             priority: project.priority || "Medium",
             status: project.status || "Planning",
             createdBy: project.createdBy || "Admin",
@@ -167,12 +205,24 @@ function Projects() {
 
             const isEditing = Boolean(editingProject);
 
+            // Final safety filter before sending data to backend
+            const eligibleIds = new Set(
+                eligibleTeamMembers.map((member) => String(member._id))
+            );
+
+            const safeFormData = {
+                ...formData,
+                teamMembers: formData.teamMembers.filter(
+                    (id) => eligibleIds.has(String(id))
+                ),
+            };
+
             const response = await fetch(
                 isEditing ? `${API_URL}/${editingProject._id}` : API_URL,
                 {
                     method: isEditing ? "PUT" : "POST",
                     headers: getAuthHeaders(),
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify(safeFormData),
                 }
             );
 
@@ -656,8 +706,8 @@ function Projects() {
                                 </label>
 
                                 <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-slate-700 dark:bg-slate-800">
-                                    {employees.length > 0 ? (
-                                        employees.map((employee) => {
+                                    {eligibleTeamMembers.length > 0 ? (
+                                        eligibleTeamMembers.map((employee) => {
                                             const employeeId = employee._id;
 
                                             return (
@@ -680,7 +730,7 @@ function Projects() {
                                         })
                                     ) : (
                                         <p className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                                            No employees available.
+                                            No eligible team members available.
                                         </p>
                                     )}
                                 </div>
