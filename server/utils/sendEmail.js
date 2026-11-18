@@ -1,37 +1,35 @@
 
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000,
-});
-
 const sendEmail = async ({ to, subject, html }) => {
-    try {
-        await transporter.verify();
-        console.log("Gmail SMTP connection successful!");
+  try {
+    const response = await fetch(process.env.GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token: process.env.GOOGLE_SCRIPT_SECRET,
+        to,
+        subject,
+        html,
+      }),
+      redirect: "follow",
+    });
 
-        const info = await transporter.sendMail({
-            from: `"ZenHR" <${process.env.EMAIL_USER}>`,
-            to,
-            subject,
-            html,
-        });
+    const result = await response.json();
 
-        console.log("Email sent:", info.messageId);
-        return info;
-    } catch (error) {
-        console.error("Email sending error:", error);
-        throw error;
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message || "Google email service failed"
+      );
     }
+
+    console.log("Email sent successfully:", to);
+
+    return result;
+  } catch (error) {
+    console.error("Google Apps Script Email Error:", error.message);
+    throw error;
+  }
 };
 
 module.exports = sendEmail;
