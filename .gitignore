@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+dist/
+dist-ssr/
+build/
+
+logs/
+*.log
+npm-debug.log*
+
+.vscode/*
+.idea/
+.DS_Store
+*.local
