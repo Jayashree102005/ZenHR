@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -76,6 +75,10 @@ function HRManagement() {
   const [attendance, setAttendance] = useState([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
+  // Today's attendance for all HR accounts
+  const [todayAttendance, setTodayAttendance] = useState({});
+  const [todayAttendanceLoading, setTodayAttendanceLoading] = useState(true);
+
   const currentDate = new Date();
 
   const [selectedMonth, setSelectedMonth] = useState(
@@ -122,8 +125,72 @@ function HRManagement() {
     }
   };
 
+  // ==========================================
+  // FETCH ALL HR TODAY'S ATTENDANCE
+  // ==========================================
+  const fetchTodayAttendance = async () => {
+    try {
+      setTodayAttendanceLoading(true);
+
+      const today = new Date();
+
+      const url = `${ATTENDANCE_URL}?year=${today.getFullYear()}&month=${
+        today.getMonth() + 1
+      }`;
+
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch today's attendance"
+        );
+      }
+
+      const records = Array.isArray(data) ? data : [];
+
+      const todayKey = `${today.getFullYear()}-${String(
+        today.getMonth() + 1
+      ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+      const attendanceMap = {};
+
+      records.forEach((record) => {
+        const hrId = record.hr?._id || record.hr;
+
+        const attendanceDate = record.checkIn || record.date;
+
+        if (!hrId || record.employee || !attendanceDate) return;
+
+        const parsedDate = new Date(attendanceDate);
+
+        if (Number.isNaN(parsedDate.getTime())) return;
+
+        const attendanceDateKey = `${parsedDate.getFullYear()}-${String(
+          parsedDate.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+          parsedDate.getDate()
+        ).padStart(2, "0")}`;
+
+        if (attendanceDateKey === todayKey) {
+          attendanceMap[String(hrId)] = record;
+        }
+      });
+
+      setTodayAttendance(attendanceMap);
+    } catch (error) {
+      console.error("Today's HR attendance error:", error);
+    } finally {
+      setTodayAttendanceLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchHRs();
+    fetchTodayAttendance();
   }, []);
 
   // ==========================================
@@ -136,8 +203,7 @@ function HRManagement() {
       setAttendanceLoading(true);
       setError("");
 
-      const url =
-        `${ATTENDANCE_URL}?year=${selectedYear}&month=${selectedMonth}`;
+      const url = `${ATTENDANCE_URL}?year=${selectedYear}&month=${selectedMonth}`;
 
       const response = await fetch(url, {
         headers: getAuthHeaders(),
@@ -280,9 +346,9 @@ function HRManagement() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-          (isEditing
-            ? "Failed to update HR details"
-            : "Failed to create HR account")
+            (isEditing
+              ? "Failed to update HR details"
+              : "Failed to create HR account")
         );
       }
 
@@ -297,6 +363,7 @@ function HRManagement() {
       setFormData(initialFormData);
 
       await fetchHRs();
+      await fetchTodayAttendance();
     } catch (error) {
       setError(error.message);
     } finally {
@@ -332,6 +399,7 @@ function HRManagement() {
       setSuccess(`HR account is now ${newStatus}.`);
 
       await fetchHRs();
+      await fetchTodayAttendance();
     } catch (error) {
       setError(error.message);
     }
@@ -370,6 +438,7 @@ function HRManagement() {
       }
 
       await fetchHRs();
+      await fetchTodayAttendance();
     } catch (error) {
       setError(error.message);
     }
@@ -608,14 +677,15 @@ function HRManagement() {
 
                       <td className="px-5 py-4">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${record.status === "Late"
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            record.status === "Late"
                               ? "bg-orange-100 text-orange-700"
                               : record.status === "Absent"
                                 ? "bg-red-100 text-red-700"
                                 : record.status === "Half Day"
                                   ? "bg-blue-100 text-blue-700"
                                   : "bg-emerald-100 text-emerald-700"
-                            }`}
+                          }`}
                         >
                           {record.status || "Present"}
                         </span>
@@ -928,7 +998,7 @@ function HRManagement() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-left">
+            <table className="w-full min-w-[1200px] text-left">
               <thead className="bg-gray-100 text-sm text-gray-600">
                 <tr>
                   <th className="px-5 py-4">HR Name</th>
@@ -936,6 +1006,7 @@ function HRManagement() {
                   <th className="px-5 py-4">Department</th>
                   <th className="px-5 py-4">Designation</th>
                   <th className="px-5 py-4">Status</th>
+                  <th className="px-5 py-4">Today's Attendance</th>
                   <th className="px-5 py-4">Attendance</th>
                   <th className="px-5 py-4">Actions</th>
                 </tr>
@@ -967,13 +1038,64 @@ function HRManagement() {
                     {/* Status */}
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${hr.status === "Active"
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          hr.status === "Active"
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"
-                          }`}
+                        }`}
                       >
                         {hr.status}
                       </span>
+                    </td>
+
+                    {/* Today's Attendance */}
+                    <td className="px-5 py-4">
+                      {todayAttendanceLoading ? (
+                        <span className="text-xs text-gray-400">
+                          Loading...
+                        </span>
+                      ) : (
+                        (() => {
+                          const record = todayAttendance[String(hr._id)];
+
+                          const attendanceStatus = record
+                            ? record.status || "Present"
+                            : "Absent";
+
+                          const statusClass =
+                            attendanceStatus === "Present"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : attendanceStatus === "Late"
+                                ? "bg-orange-100 text-orange-700"
+                                : attendanceStatus === "Half Day"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : attendanceStatus === "On Leave"
+                                    ? "bg-purple-100 text-purple-700"
+                                    : "bg-red-100 text-red-700";
+
+                          return (
+                            <div className="flex flex-col items-start gap-1">
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}
+                              >
+                                {attendanceStatus}
+                              </span>
+
+                              {record?.checkIn && (
+                                <span className="text-xs text-gray-500">
+                                  In: {formatTime(record.checkIn)}
+                                </span>
+                              )}
+
+                              {record?.checkOut && (
+                                <span className="text-xs text-gray-500">
+                                  Out: {formatTime(record.checkOut)}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()
+                      )}
                     </td>
 
                     {/* Attendance Details Button */}
