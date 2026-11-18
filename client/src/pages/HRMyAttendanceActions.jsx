@@ -9,7 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 const currentDate = new Date();
 
@@ -857,13 +857,12 @@ function HRMyAttendanceActions() {
 
                       <td className="px-3 py-3">
                         <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                            leave.status?.toLowerCase() === "approved"
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${leave.status?.toLowerCase() === "approved"
                               ? "bg-green-100 text-green-700"
                               : leave.status?.toLowerCase() === "rejected"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-amber-100 text-amber-700"
-                          }`}
+                                ? "bg-red-100 text-red-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}
                         >
                           {leave.status}
                         </span>

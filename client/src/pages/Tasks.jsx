@@ -12,8 +12,8 @@ import {
   X,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api/tasks";
-const EMPLOYEE_URL = "http://localhost:5000/api/employees";
+const API_URL = "https://zenhr-backend.onrender.com/api/tasks";
+const EMPLOYEE_URL = "https://zenhr-backend.onrender.com/api/employees";
 
 const emptyForm = {
   title: "",
@@ -219,9 +219,8 @@ function Tasks() {
   // Search and filter
   const filteredTasks = tasks.filter((task) => {
     const employeeName = task.assignedTo
-      ? `${task.assignedTo.firstName || ""} ${
-          task.assignedTo.lastName || ""
-        }`
+      ? `${task.assignedTo.firstName || ""} ${task.assignedTo.lastName || ""
+      }`
       : "";
 
     const matchesSearch =
@@ -642,8 +641,8 @@ function Tasks() {
                   {saving
                     ? "Saving..."
                     : editingTask
-                    ? "Update Task"
-                    : "Create Task"}
+                      ? "Update Task"
+                      : "Create Task"}
                 </button>
               </div>
             </form>

@@ -8,7 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api/leaves";
+const API_URL = "https://zenhr-backend.onrender.com/api/leaves";
 
 function Leave() {
   const [leaves, setLeaves] = useState([]);

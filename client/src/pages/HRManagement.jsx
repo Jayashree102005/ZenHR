@@ -7,8 +7,8 @@ import {
   CalendarDays,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api/hr";
-const ATTENDANCE_URL = "http://localhost:5000/api/attendance";
+const API_URL = "https://zenhr-backend.onrender.com/api/hr";
+const ATTENDANCE_URL = "https://zenhr-backend.onrender.com/api/attendance";
 
 const initialFormData = {
   firstName: "",
@@ -280,9 +280,9 @@ function HRManagement() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            (isEditing
-              ? "Failed to update HR details"
-              : "Failed to create HR account")
+          (isEditing
+            ? "Failed to update HR details"
+            : "Failed to create HR account")
         );
       }
 
@@ -608,15 +608,14 @@ function HRManagement() {
 
                       <td className="px-5 py-4">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            record.status === "Late"
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${record.status === "Late"
                               ? "bg-orange-100 text-orange-700"
                               : record.status === "Absent"
-                              ? "bg-red-100 text-red-700"
-                              : record.status === "Half Day"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
+                                ? "bg-red-100 text-red-700"
+                                : record.status === "Half Day"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-emerald-100 text-emerald-700"
+                            }`}
                         >
                           {record.status || "Present"}
                         </span>
@@ -900,8 +899,8 @@ function HRManagement() {
                     ? "Saving Changes..."
                     : "Creating..."
                   : editingHR
-                  ? "Save Changes"
-                  : "Create HR Account"}
+                    ? "Save Changes"
+                    : "Create HR Account"}
               </button>
 
               <button
@@ -968,11 +967,10 @@ function HRManagement() {
                     {/* Status */}
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          hr.status === "Active"
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${hr.status === "Active"
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"
-                        }`}
+                          }`}
                       >
                         {hr.status}
                       </span>

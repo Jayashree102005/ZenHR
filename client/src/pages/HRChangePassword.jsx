@@ -47,7 +47,7 @@ const HRChangePassword = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/hr/change-password",
+        "https://zenhr-backend.onrender.com/api/hr/change-password",
         {
           method: "PUT",
           headers: {

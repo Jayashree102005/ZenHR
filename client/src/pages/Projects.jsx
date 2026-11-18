@@ -11,8 +11,8 @@ import {
     X,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api/projects";
-const EMPLOYEE_URL = "http://localhost:5000/api/employees";
+const API_URL = "https://zenhr-backend.onrender.com/api/projects";
+const EMPLOYEE_URL = "https://zenhr-backend.onrender.com/api/employees";
 
 const emptyForm = {
     name: "",

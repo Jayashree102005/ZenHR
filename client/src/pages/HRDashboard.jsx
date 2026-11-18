@@ -18,7 +18,7 @@ import HRMyAttendanceActions from "./HRMyAttendanceActions";
 import Leave from "./Leave";
 import Tasks from "./Tasks";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 const hrMenu = [
   { name: "Dashboard", icon: LayoutDashboard },
@@ -301,11 +301,10 @@ function HRDashboard({ onLogout }) {
               </p>
 
               <span
-                className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                  hr.status === "Active"
+                className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-medium ${hr.status === "Active"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
-                }`}
+                  }`}
               >
                 {hr.status || "Status unavailable"}
               </span>
@@ -610,9 +609,8 @@ function HRDashboard({ onLogout }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0`}
       >
         {/* Logo */}
         <div className="flex h-20 items-center justify-between border-b border-slate-100 px-6">
@@ -650,11 +648,10 @@ function HRDashboard({ onLogout }) {
                     setActivePage(item.name);
                     setSidebarOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition ${
-                    isActive
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition ${isActive
                       ? "bg-blue-50 text-blue-600"
                       : "text-slate-600 hover:bg-slate-100"
-                  }`}
+                    }`}
                 >
                   <Icon size={19} />
                   <span>{item.name}</span>

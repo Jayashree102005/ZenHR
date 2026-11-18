@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const API_URL = "http://localhost:5000/api/admin/auth/login";
+const API_URL = "https://zenhr-backend.onrender.com/api/admin/auth/login";
 
 function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState("");

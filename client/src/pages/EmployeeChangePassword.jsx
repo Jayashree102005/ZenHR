@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 function PasswordField({
   label,

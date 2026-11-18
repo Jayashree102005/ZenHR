@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:5000/api/activities";
-const LEADS_URL = "http://localhost:5000/api/leads";
-const DEALS_URL = "http://localhost:5000/api/deals";
+const API_URL = "https://zenhr-backend.onrender.com/api/activities";
+const LEADS_URL = "https://zenhr-backend.onrender.com/api/leads";
+const DEALS_URL = "https://zenhr-backend.onrender.com/api/deals";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("zenhr-token");
@@ -657,9 +657,8 @@ function TypeBadge({ type }) {
 
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs font-medium ${
-        typeClass[type] || "bg-gray-100 text-gray-600"
-      }`}
+      className={`rounded-full px-3 py-1 text-xs font-medium ${typeClass[type] || "bg-gray-100 text-gray-600"
+        }`}
     >
       {type}
     </span>
@@ -677,9 +676,8 @@ function StatusBadge({ status }) {
 
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs font-medium ${
-        statusClass[status] || "bg-gray-100 text-gray-600"
-      }`}
+      className={`rounded-full px-3 py-1 text-xs font-medium ${statusClass[status] || "bg-gray-100 text-gray-600"
+        }`}
     >
       {status}
     </span>

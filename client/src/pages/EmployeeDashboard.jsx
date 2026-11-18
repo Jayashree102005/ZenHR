@@ -20,7 +20,7 @@ import {
   FileText,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -636,8 +636,8 @@ function EmployeeDashboard() {
                   key={item.name}
                   onClick={() => handlePageChange(item.name)}
                   className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${activePage === item.name
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
                     }`}
                 >
                   <Icon size={19} />
@@ -1549,7 +1549,7 @@ function EmployeeDashboard() {
                     <div className="px-5 pb-6 sm:px-8">
 
                       {/* AVATAR + NAME + STATUS */}
-<div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                      <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                         {/* AVATAR AND NAME */}
                         <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end">
                           <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-blue-50 text-3xl font-bold uppercase text-blue-700 shadow-md">
@@ -1575,14 +1575,14 @@ function EmployeeDashboard() {
                         <div className="sm:pb-2">
                           <span
                             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${myProfile.status === "Active"
-                                ? "bg-green-50 text-green-700"
-                                : "bg-red-50 text-red-700"
+                              ? "bg-green-50 text-green-700"
+                              : "bg-red-50 text-red-700"
                               }`}
                           >
                             <span
                               className={`h-2 w-2 rounded-full ${myProfile.status === "Active"
-                                  ? "bg-green-500"
-                                  : "bg-red-500"
+                                ? "bg-green-500"
+                                : "bg-red-500"
                                 }`}
                             />
                             {myProfile.status || "Active"}
@@ -1739,8 +1739,8 @@ function EmployeeDashboard() {
                           Employment Status
                         </p>
                         <p className={`mt-2 text-sm font-semibold ${myProfile.status === "Active"
-                            ? "text-green-600"
-                            : "text-red-600"
+                          ? "text-green-600"
+                          : "text-red-600"
                           }`}>
                           {myProfile.status || "Active"}
                         </p>

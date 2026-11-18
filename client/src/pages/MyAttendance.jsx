@@ -9,7 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 const formatTime = (value) => {
   if (!value) return "--";
@@ -176,7 +176,7 @@ function MyAttendance() {
     return (
       total +
       (new Date(record.checkOut) - new Date(record.checkIn)) /
-        (1000 * 60 * 60)
+      (1000 * 60 * 60)
     );
   }, 0);
 

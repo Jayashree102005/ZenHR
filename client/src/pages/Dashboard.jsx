@@ -10,7 +10,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 function Dashboard({ onPageChange }) {
   const [employees, setEmployees] = useState([]);
@@ -228,9 +228,9 @@ function Dashboard({ onPageChange }) {
               <span className="font-bold text-slate-800 dark:text-white">
                 {employees.length > 0
                   ? Math.min(
-                      Math.round((presentToday / employees.length) * 100),
-                      100
-                    )
+                    Math.round((presentToday / employees.length) * 100),
+                    100
+                  )
                   : 0}
                 %
               </span>
@@ -240,11 +240,10 @@ function Dashboard({ onPageChange }) {
               <div
                 className="h-full rounded-full bg-blue-600 transition-all"
                 style={{
-                  width: `${
-                    employees.length > 0
+                  width: `${employees.length > 0
                       ? Math.min((presentToday / employees.length) * 100, 100)
                       : 0
-                  }%`,
+                    }%`,
                 }}
               />
             </div>
@@ -406,13 +405,12 @@ function Dashboard({ onPageChange }) {
 
                   <td className="px-5 py-4">
                     <span
-                      className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                        employee.status === "Active"
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold ${employee.status === "Active"
                           ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
                           : employee.status === "On Leave"
                             ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
                             : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                      }`}
+                        }`}
                     >
                       {employee.status || "Unknown"}
                     </span>

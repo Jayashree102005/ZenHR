@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:5000/api/deals";
+const API_URL = "https://zenhr-backend.onrender.com/api/deals";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("zenhr-token");
@@ -555,9 +555,8 @@ function StageBadge({ stage }) {
 
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs font-medium ${
-        stageClass[stage] || "bg-gray-100 text-gray-600"
-      }`}
+      className={`rounded-full px-3 py-1 text-xs font-medium ${stageClass[stage] || "bg-gray-100 text-gray-600"
+        }`}
     >
       {stage}
     </span>

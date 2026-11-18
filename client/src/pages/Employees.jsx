@@ -10,7 +10,7 @@ import {
 
 import AddEmployee from "../components/AddEmployee";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 function Employees({ excludeHRAccounts = false }) {
   const [employees, setEmployees] = useState([]);
@@ -67,10 +67,10 @@ function Employees({ excludeHRAccounts = false }) {
   // Admin can see regular employees and HR accounts
   const visibleEmployees = excludeHRAccounts
     ? employees.filter((employee) => {
-        const role = employee.role?.toLowerCase();
+      const role = employee.role?.toLowerCase();
 
-        return role !== "hr" && role !== "admin";
-      })
+      return role !== "hr" && role !== "admin";
+    })
     : employees;
 
   // Add or update normal Employee
@@ -116,7 +116,7 @@ function Employees({ excludeHRAccounts = false }) {
 
         alert(
           data.message ||
-            "Employee created successfully. Login credentials sent to email."
+          "Employee created successfully. Login credentials sent to email."
         );
       }
 
@@ -181,8 +181,7 @@ function Employees({ excludeHRAccounts = false }) {
     }
 
     const confirmPermanentDelete = window.confirm(
-      `WARNING: Permanently delete ${
-        employee?.firstName || "this employee"
+      `WARNING: Permanently delete ${employee?.firstName || "this employee"
       }? This will also delete their related attendance, leave, and task records. This action cannot be undone.`
     );
 
@@ -243,9 +242,8 @@ function Employees({ excludeHRAccounts = false }) {
 
   // Get Employee initials
   function getInitials(employee) {
-    return `${employee.firstName?.[0] || ""}${
-      employee.lastName?.[0] || ""
-    }`.toUpperCase();
+    return `${employee.firstName?.[0] || ""}${employee.lastName?.[0] || ""
+      }`.toUpperCase();
   }
 
   // Status badge style
@@ -467,11 +465,10 @@ function Employees({ excludeHRAccounts = false }) {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
-                            isHR
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${isHR
                               ? "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
                               : "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                          }`}
+                            }`}
                         >
                           {getInitials(employee)}
                         </div>

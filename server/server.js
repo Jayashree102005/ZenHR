@@ -1,3 +1,4 @@
+
 const dotenv = require("dotenv");
 
 // Load environment variables first
@@ -7,6 +8,7 @@ const cors = require("cors");
 const express = require("express");
 const connectDB = require("./config/db");
 
+// Import Routes
 const employeeRoutes = require("./routes/employeeRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");
@@ -21,13 +23,21 @@ const adminAuthRoutes = require("./routes/adminAuthRoutes");
 const hrRoutes = require("./routes/hrRoutes");
 const hrDashboardRoutes = require("./routes/hrDashboardRoutes");
 const payslipRoutes = require("./routes/payslipRoutes");
+
+// Initialize Express
 const app = express();
 
-// Middleware
+// ==========================================
+// MIDDLEWARE
+// ==========================================
+
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// ==========================================
+// API ROUTES
+// ==========================================
+
 app.use("/api/employees", employeeRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/leaves", leaveRoutes);
@@ -43,26 +53,52 @@ app.use("/api/hr", hrRoutes);
 app.use("/api/hr-dashboard", hrDashboardRoutes);
 app.use("/api/payslips", payslipRoutes);
 
-// Welcome route
+// ==========================================
+// WELCOME ROUTE
+// ==========================================
+
 app.get("/", (req, res) => {
   res.send("Welcome to ZenHR Backend!");
 });
 
-// Connect MongoDB
-connectDB();
+// ==========================================
+// HEALTH CHECK ROUTE
+// ==========================================
 
-// Start server
-app.listen(5000, () => {
-  console.log("ZenHR server is running on port 5000");
-
-  console.log(
-    "EMAIL_USER loaded:",
-    Boolean(process.env.EMAIL_USER)
-  );
-
-  console.log(
-    "EMAIL_PASS loaded:",
-    Boolean(process.env.EMAIL_PASS)
-  );
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "ZenHR Backend is running successfully",
+  });
 });
 
+// ==========================================
+// MONGODB CONNECTION AND SERVER START
+// ==========================================
+
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`ZenHR server is running on port ${PORT}`);
+
+      console.log(
+        "EMAIL_USER loaded:",
+        Boolean(process.env.EMAIL_USER)
+      );
+
+      console.log(
+        "EMAIL_PASS loaded:",
+        Boolean(process.env.EMAIL_PASS)
+      );
+    });
+  } catch (error) {
+    console.error("Failed to start ZenHR server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();

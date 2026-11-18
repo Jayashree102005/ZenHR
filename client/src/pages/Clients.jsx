@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:5000/api/clients";
+const API_URL = "https://zenhr-backend.onrender.com/api/clients";
 
 const emptyForm = {
   companyName: "",
@@ -307,11 +307,10 @@ function Clients() {
 
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          client.status === "Active"
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${client.status === "Active"
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300"
-                        }`}
+                          }`}
                       >
                         {client.status}
                       </span>

@@ -7,7 +7,7 @@ import {
   Eye,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 function Attendance() {
   const [employees, setEmployees] = useState([]);
@@ -129,23 +129,23 @@ function Attendance() {
       if (!responses[1].ok) {
         throw new Error(
           selectedAttendanceData.message ||
-            "Failed to load attendance"
+          "Failed to load attendance"
         );
       }
 
       if (responses[2] && !responses[2].ok) {
         throw new Error(
           currentAttendanceData.message ||
-            "Failed to load today's attendance"
+          "Failed to load today's attendance"
         );
       }
 
       // ONLY EMPLOYEE RECORDS
       const employeeOnlyData = Array.isArray(employeeData)
         ? employeeData.filter(
-            (employee) =>
-              employee.role?.toLowerCase() === "employee"
-          )
+          (employee) =>
+            employee.role?.toLowerCase() === "employee"
+        )
         : [];
 
       setEmployees(employeeOnlyData);
@@ -258,21 +258,18 @@ function Attendance() {
 
       if (!matchedEmployee) return "Unknown";
 
-      return `${matchedEmployee.firstName || ""} ${
-        matchedEmployee.lastName || ""
-      }`.trim();
+      return `${matchedEmployee.firstName || ""} ${matchedEmployee.lastName || ""
+        }`.trim();
     }
 
-    return `${employee.firstName || ""} ${
-      employee.lastName || ""
-    }`.trim();
+    return `${employee.firstName || ""} ${employee.lastName || ""
+      }`.trim();
   };
 
   // EMPLOYEE SEARCH
   const filteredEmployees = employees.filter((employee) => {
-    const name = `${employee.firstName || ""} ${
-      employee.lastName || ""
-    }`.toLowerCase();
+    const name = `${employee.firstName || ""} ${employee.lastName || ""
+      }`.toLowerCase();
 
     const department = (
       employee.department || ""
@@ -289,22 +286,22 @@ function Attendance() {
   // SELECTED EMPLOYEE MONTHLY ATTENDANCE
   const selectedEmployeeAttendance = selectedEmployeeId
     ? employeeAttendance.filter((record) => {
-        const recordEmployeeId =
-          record.employee?._id || record.employee;
+      const recordEmployeeId =
+        record.employee?._id || record.employee;
 
-        if (!record.date) return false;
+      if (!record.date) return false;
 
-        const recordDate = new Date(record.date);
+      const recordDate = new Date(record.date);
 
-        return (
-          String(recordEmployeeId) ===
-            String(selectedEmployeeId) &&
-          recordDate.getMonth() + 1 ===
-            Number(selectedMonth) &&
-          recordDate.getFullYear() ===
-            Number(selectedYear)
-        );
-      })
+      return (
+        String(recordEmployeeId) ===
+        String(selectedEmployeeId) &&
+        recordDate.getMonth() + 1 ===
+        Number(selectedMonth) &&
+        recordDate.getFullYear() ===
+        Number(selectedYear)
+      );
+    })
     : [];
 
   const selectedEmployeePresent =
@@ -359,18 +356,18 @@ function Attendance() {
               const workingHours =
                 record.checkIn && record.checkOut
                   ? (
-                      (new Date(record.checkOut) -
-                        new Date(record.checkIn)) /
-                      (1000 * 60 * 60)
-                    ).toFixed(2)
+                    (new Date(record.checkOut) -
+                      new Date(record.checkIn)) /
+                    (1000 * 60 * 60)
+                  ).toFixed(2)
                   : "--";
 
               const employee =
                 typeof record.employee === "object"
                   ? record.employee
                   : employees.find(
-                      (item) => item._id === record.employee
-                    );
+                    (item) => item._id === record.employee
+                  );
 
               return (
                 <tr
@@ -419,15 +416,14 @@ function Attendance() {
 
                   <td className="px-6 py-4">
                     <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                        record.status === "Late"
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${record.status === "Late"
                           ? "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
                           : record.status === "Absent"
-                          ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
-                          : record.status === "Leave"
-                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                          : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                      }`}
+                            ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+                            : record.status === "Leave"
+                              ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                              : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                        }`}
                     >
                       {record.status || "Present"}
                     </span>

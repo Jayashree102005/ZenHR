@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:5000/api/settings";
+const API_URL = "https://zenhr-backend.onrender.com/api/settings";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("zenhr-token");

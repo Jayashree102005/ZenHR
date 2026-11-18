@@ -14,7 +14,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://zenhr-backend.onrender.com/api";
 
 const monthNames = [
   "January", "February", "March", "April", "May", "June",
@@ -779,11 +779,10 @@ function Payslips() {
 
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          payslip.employeeModel === "HR"
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${payslip.employeeModel === "HR"
                             ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
                             : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                        }`}
+                          }`}
                       >
                         {payslip.employeeModel}
                       </span>
@@ -967,11 +966,10 @@ function ActionButton({ title, onClick, disabled, danger, children }) {
       title={title}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-50 ${
-        danger
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-50 ${danger
           ? "border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
           : "border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-slate-800"
-      }`}
+        }`}
     >
       {children}
     </button>
