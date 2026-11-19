@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 
@@ -28,7 +27,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// PUT: Save settings and update Admin email
+// PUT: Save account, company and office settings
 router.put("/", async (req, res) => {
   try {
     const {
@@ -38,9 +37,12 @@ router.put("/", async (req, res) => {
       companyEmail,
       emailNotifications,
       leaveNotifications,
+      officeStartTime,
+      officeEndTime,
+      gracePeriodMinutes,
+      workingDays,
     } = req.body;
 
-    // Find the currently logged-in admin
     const admin = await Admin.findById(req.admin._id);
 
     if (!admin) {
@@ -49,49 +51,81 @@ router.put("/", async (req, res) => {
       });
     }
 
-    // Validate admin email
-    if (!adminEmail) {
-      return res.status(400).json({
-        message: "Admin email is required",
+    // Validate admin email when provided
+    if (adminEmail !== undefined) {
+      if (!adminEmail.trim()) {
+        return res.status(400).json({
+          message: "Admin email is required",
+        });
+      }
+
+      const existingAdmin = await Admin.findOne({
+        email: adminEmail,
+        _id: { $ne: admin._id },
       });
+
+      if (existingAdmin) {
+        return res.status(400).json({
+          message: "This email is already registered",
+        });
+      }
+
+      admin.email = adminEmail;
+      await admin.save();
     }
 
-    // Check whether another admin already uses this email
-    const existingAdmin = await Admin.findOne({
-      email: adminEmail,
-      _id: { $ne: admin._id },
-    });
+    // Prepare only the fields sent by frontend
+    const updateFields = {};
 
-    if (existingAdmin) {
-      return res.status(400).json({
-        message: "This email is already registered",
-      });
+    if (adminName !== undefined) updateFields.adminName = adminName;
+    if (adminEmail !== undefined) updateFields.adminEmail = adminEmail;
+    if (companyName !== undefined) updateFields.companyName = companyName;
+    if (companyEmail !== undefined) updateFields.companyEmail = companyEmail;
+
+    if (emailNotifications !== undefined) {
+      updateFields.emailNotifications = emailNotifications;
     }
 
-    // Update email in Admin collection
-    admin.email = adminEmail;
-    await admin.save();
+    if (leaveNotifications !== undefined) {
+      updateFields.leaveNotifications = leaveNotifications;
+    }
 
-    // Save settings in Settings collection
+    if (officeStartTime !== undefined) {
+      updateFields.officeStartTime = officeStartTime;
+    }
+
+    if (officeEndTime !== undefined) {
+      updateFields.officeEndTime = officeEndTime;
+    }
+
+    if (gracePeriodMinutes !== undefined) {
+      updateFields.gracePeriodMinutes = gracePeriodMinutes;
+    }
+
+    if (workingDays !== undefined) {
+      updateFields.workingDays = workingDays;
+    }
+
     const settings = await Settings.findOneAndUpdate(
       {},
-      {
-        adminName,
-        adminEmail,
-        companyName,
-        companyEmail,
-        emailNotifications,
-        leaveNotifications,
-      },
+      { $set: updateFields },
       {
         new: true,
         upsert: true,
         runValidators: true,
+        setDefaultsOnInsert: true,
       }
     );
 
+    // Validate that end time is after start time
+    if (settings.officeEndTime <= settings.officeStartTime) {
+      return res.status(400).json({
+        message: "Office end time must be later than office start time",
+      });
+    }
+
     res.status(200).json({
-      message: "Settings and admin email updated successfully",
+      message: "Settings updated successfully",
       settings,
     });
   } catch (error) {
@@ -103,7 +137,6 @@ router.put("/", async (req, res) => {
 });
 
 // PATCH: Change Admin Password
-// PATCH /api/settings/password
 router.patch("/password", async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -120,7 +153,6 @@ router.patch("/password", async (req, res) => {
       });
     }
 
-    // Find the logged-in admin
     const admin = await Admin.findById(req.admin._id);
 
     if (!admin) {
@@ -129,7 +161,6 @@ router.patch("/password", async (req, res) => {
       });
     }
 
-    // Verify current password
     const isPasswordCorrect = await bcrypt.compare(
       currentPassword,
       admin.password
@@ -141,10 +172,8 @@ router.patch("/password", async (req, res) => {
       });
     }
 
-    // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password in MongoDB
     admin.password = hashedPassword;
     await admin.save();
 

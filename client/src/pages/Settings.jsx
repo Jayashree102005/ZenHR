@@ -3,6 +3,24 @@ import { useEffect, useState } from "react";
 
 const API_URL = "https://zenhr-backend.onrender.com/api/settings";
 
+const DEFAULT_WORKING_DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+];
+
+const ALL_WORKING_DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
 const getAuthHeaders = () => {
   const token = localStorage.getItem("zenhr-token");
 
@@ -13,23 +31,34 @@ const getAuthHeaders = () => {
 };
 
 function Settings() {
+  // Admin Profile
   const [adminName, setAdminName] = useState("Admin");
   const [adminEmail, setAdminEmail] = useState("admin@zenhr.com");
 
+  // Company Information
   const [companyName, setCompanyName] = useState("ZenHR");
   const [companyEmail, setCompanyEmail] = useState("contact@zenhr.com");
 
+  // Office Timing Settings
+  const [officeStartTime, setOfficeStartTime] = useState("09:00");
+  const [officeEndTime, setOfficeEndTime] = useState("18:00");
+  const [gracePeriodMinutes, setGracePeriodMinutes] = useState(15);
+  const [workingDays, setWorkingDays] = useState(DEFAULT_WORKING_DAYS);
+
+  // Change Password
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Notifications
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [leaveNotifications, setLeaveNotifications] = useState(true);
 
+  // Loading States
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Load settings from MongoDB
+  // Load Settings from MongoDB
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -43,12 +72,21 @@ function Settings() {
           throw new Error(data.message || "Failed to load settings");
         }
 
+        // Admin Profile
         setAdminName(data.adminName || "Admin");
         setAdminEmail(data.adminEmail || "admin@zenhr.com");
 
+        // Company Information
         setCompanyName(data.companyName || "ZenHR");
         setCompanyEmail(data.companyEmail || "contact@zenhr.com");
 
+        // Office Timing Settings
+        setOfficeStartTime(data.officeStartTime || "09:00");
+        setOfficeEndTime(data.officeEndTime || "18:00");
+        setGracePeriodMinutes(data.gracePeriodMinutes ?? 15);
+        setWorkingDays(data.workingDays || DEFAULT_WORKING_DAYS);
+
+        // Notifications
         setEmailNotifications(data.emailNotifications ?? true);
         setLeaveNotifications(data.leaveNotifications ?? true);
       } catch (error) {
@@ -62,14 +100,45 @@ function Settings() {
     fetchSettings();
   }, []);
 
+  // Toggle Working Days
+  const handleWorkingDayChange = (day, checked) => {
+    setWorkingDays((previousDays) => {
+      if (checked) {
+        return [...previousDays, day];
+      }
+
+      return previousDays.filter((item) => item !== day);
+    });
+  };
+
   // Save Settings and Change Password
   const handleSave = async (e) => {
     e.preventDefault();
 
+    // Validate office timings
+    if (officeEndTime <= officeStartTime) {
+      alert("Office end time must be later than office start time!");
+      return;
+    }
+
+    if (
+      gracePeriodMinutes < 0 ||
+      gracePeriodMinutes > 180 ||
+      !Number.isInteger(Number(gracePeriodMinutes))
+    ) {
+      alert("Grace period must be between 0 and 180 minutes!");
+      return;
+    }
+
+    if (workingDays.length === 0) {
+      alert("Please select at least one working day!");
+      return;
+    }
+
     const passwordFieldsFilled =
       currentPassword || newPassword || confirmPassword;
 
-    // Validate password fields
+    // Validate Password Fields
     if (passwordFieldsFilled) {
       if (!currentPassword || !newPassword || !confirmPassword) {
         alert("Please fill all password fields!");
@@ -90,7 +159,7 @@ function Settings() {
     setSaving(true);
 
     try {
-      // First: Save account and company settings
+      // First: Save Account, Company, Office and Notification Settings
       const settingsResponse = await fetch(API_URL, {
         method: "PUT",
         headers: getAuthHeaders(),
@@ -99,8 +168,14 @@ function Settings() {
           adminEmail,
           companyName,
           companyEmail,
+
           emailNotifications,
           leaveNotifications,
+
+          officeStartTime,
+          officeEndTime,
+          gracePeriodMinutes: Number(gracePeriodMinutes),
+          workingDays,
         }),
       });
 
@@ -112,7 +187,7 @@ function Settings() {
         );
       }
 
-      // Second: Change password only if password fields are filled
+      // Second: Change Password if Fields are Filled
       if (passwordFieldsFilled) {
         const passwordResponse = await fetch(`${API_URL}/password`, {
           method: "PATCH",
@@ -132,7 +207,7 @@ function Settings() {
         }
       }
 
-      // Update UI with saved settings
+      // Update UI with Saved Settings
       const savedSettings = settingsData.settings;
 
       setAdminName(savedSettings.adminName);
@@ -141,10 +216,15 @@ function Settings() {
       setCompanyName(savedSettings.companyName);
       setCompanyEmail(savedSettings.companyEmail);
 
+      setOfficeStartTime(savedSettings.officeStartTime || "09:00");
+      setOfficeEndTime(savedSettings.officeEndTime || "18:00");
+      setGracePeriodMinutes(savedSettings.gracePeriodMinutes ?? 15);
+      setWorkingDays(savedSettings.workingDays || DEFAULT_WORKING_DAYS);
+
       setEmailNotifications(savedSettings.emailNotifications);
       setLeaveNotifications(savedSettings.leaveNotifications);
 
-      // Clear password fields
+      // Clear Password Fields
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -268,6 +348,137 @@ function Settings() {
                   className={inputClass}
                   required
                 />
+              </div>
+            </div>
+          </section>
+
+          {/* Office Timing Settings */}
+          <section className={sectionClass}>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Office Timing Settings
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Configure your company's office hours, grace period and working days.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+
+              {/* Office Start Time */}
+              <div>
+                <label className={labelClass}>
+                  Office Start Time
+                </label>
+
+                <input
+                  type="time"
+                  value={officeStartTime}
+                  onChange={(e) => setOfficeStartTime(e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              {/* Office End Time */}
+              <div>
+                <label className={labelClass}>
+                  Office End Time
+                </label>
+
+                <input
+                  type="time"
+                  value={officeEndTime}
+                  onChange={(e) => setOfficeEndTime(e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              {/* Grace Period */}
+              <div>
+                <label className={labelClass}>
+                  Grace Period (Minutes)
+                </label>
+
+                <input
+                  type="number"
+                  min="0"
+                  max="180"
+                  step="1"
+                  value={gracePeriodMinutes}
+                  onChange={(e) =>
+                    setGracePeriodMinutes(e.target.value)
+                  }
+                  className={inputClass}
+                  required
+                />
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Extra time allowed after office start time.
+                </p>
+              </div>
+            </div>
+
+            {/* Working Days */}
+            <div className="mt-7">
+              <h3 className="mb-3 text-sm font-semibold text-gray-800">
+                Working Days
+              </h3>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-7">
+                {ALL_WORKING_DAYS.map((day) => (
+                  <label
+                    key={day}
+                    className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-3 text-sm transition ${
+                      workingDays.includes(day)
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={workingDays.includes(day)}
+                      onChange={(e) =>
+                        handleWorkingDayChange(day, e.target.checked)
+                      }
+                      className="h-4 w-4 accent-blue-600"
+                    />
+
+                    <span className="font-medium">
+                      {day.slice(0, 3)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <p className="mt-3 text-xs text-gray-500">
+                Select the days your company operates.
+              </p>
+            </div>
+
+            {/* Office Timing Summary */}
+            <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
+              <h3 className="mb-2 text-sm font-semibold text-blue-900">
+                Office Schedule Summary
+              </h3>
+
+              <div className="grid grid-cols-1 gap-2 text-sm text-blue-800 sm:grid-cols-3">
+                <p>
+                  <span className="font-medium">Office Hours:</span>{" "}
+                  {officeStartTime} - {officeEndTime}
+                </p>
+
+                <p>
+                  <span className="font-medium">Grace Period:</span>{" "}
+                  {gracePeriodMinutes} minutes
+                </p>
+
+                <p>
+                  <span className="font-medium">Working Days:</span>{" "}
+                  {workingDays.length} days
+                </p>
               </div>
             </div>
           </section>
