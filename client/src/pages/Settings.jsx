@@ -141,23 +141,21 @@ function Settings() {
       return;
     }
 
-    // Check whether user wants to change password
-    const passwordValues = [
-      currentPassword,
-      newPassword,
-      confirmPassword,
-    ];
+    // IMPORTANT:
+    // Current Password alone does NOT mean password change is requested.
+    // New Password or Confirm Password must be entered to trigger it.
+    // This prevents Chrome password autofill from blocking Settings save.
 
-    const passwordFieldsFilled = passwordValues.some(
-      (value) => value.trim() !== ""
-    );
+    const passwordFieldsFilled =
+      newPassword.trim() !== "" ||
+      confirmPassword.trim() !== "";
 
-    // Validate Password Fields Only When Password Change Is Requested
+    // Validate Password Only When User Wants to Change It
     if (passwordFieldsFilled) {
       if (
-        !currentPassword.trim() ||
-        !newPassword.trim() ||
-        !confirmPassword.trim()
+        currentPassword.trim() === "" ||
+        newPassword.trim() === "" ||
+        confirmPassword.trim() === ""
       ) {
         alert("Please fill all password fields!");
         return;
@@ -177,7 +175,7 @@ function Settings() {
     setSaving(true);
 
     try {
-      // STEP 1: Save Account, Company, Office and Notification Settings
+      // STEP 1: Save Profile, Company, Office and Notification Settings
       const settingsResponse = await fetch(API_URL, {
         method: "PUT",
         headers: getAuthHeaders(),
@@ -186,10 +184,8 @@ function Settings() {
           adminEmail,
           companyName,
           companyEmail,
-
           emailNotifications,
           leaveNotifications,
-
           officeStartTime,
           officeEndTime,
           gracePeriodMinutes: gracePeriod,
@@ -205,14 +201,14 @@ function Settings() {
         );
       }
 
-      // STEP 2: Change Password Only If User Entered Password
+      // STEP 2: Change Password Only If Requested
       if (passwordFieldsFilled) {
         const passwordResponse = await fetch(`${API_URL}/password`, {
           method: "PATCH",
           headers: getAuthHeaders(),
           body: JSON.stringify({
-            currentPassword: currentPassword.trim(),
-            newPassword: newPassword.trim(),
+            currentPassword,
+            newPassword,
           }),
         });
 
@@ -535,7 +531,7 @@ function Settings() {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className={inputClass}
-                  autoComplete="current-password"
+                  autoComplete="off"
                 />
               </div>
 
