@@ -104,7 +104,9 @@ function Settings() {
   const handleWorkingDayChange = (day, checked) => {
     setWorkingDays((previousDays) => {
       if (checked) {
-        return [...previousDays, day];
+        return previousDays.includes(day)
+          ? previousDays
+          : [...previousDays, day];
       }
 
       return previousDays.filter((item) => item !== day);
@@ -115,32 +117,48 @@ function Settings() {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    // Validate office timings
+    // Validate Office Timings
     if (officeEndTime <= officeStartTime) {
       alert("Office end time must be later than office start time!");
       return;
     }
 
+    // Validate Grace Period
+    const gracePeriod = Number(gracePeriodMinutes);
+
     if (
-      gracePeriodMinutes < 0 ||
-      gracePeriodMinutes > 180 ||
-      !Number.isInteger(Number(gracePeriodMinutes))
+      !Number.isInteger(gracePeriod) ||
+      gracePeriod < 0 ||
+      gracePeriod > 180
     ) {
       alert("Grace period must be between 0 and 180 minutes!");
       return;
     }
 
+    // Validate Working Days
     if (workingDays.length === 0) {
       alert("Please select at least one working day!");
       return;
     }
 
-    const passwordFieldsFilled =
-      currentPassword || newPassword || confirmPassword;
+    // Check whether user wants to change password
+    const passwordValues = [
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    ];
 
-    // Validate Password Fields
+    const passwordFieldsFilled = passwordValues.some(
+      (value) => value.trim() !== ""
+    );
+
+    // Validate Password Fields Only When Password Change Is Requested
     if (passwordFieldsFilled) {
-      if (!currentPassword || !newPassword || !confirmPassword) {
+      if (
+        !currentPassword.trim() ||
+        !newPassword.trim() ||
+        !confirmPassword.trim()
+      ) {
         alert("Please fill all password fields!");
         return;
       }
@@ -159,7 +177,7 @@ function Settings() {
     setSaving(true);
 
     try {
-      // First: Save Account, Company, Office and Notification Settings
+      // STEP 1: Save Account, Company, Office and Notification Settings
       const settingsResponse = await fetch(API_URL, {
         method: "PUT",
         headers: getAuthHeaders(),
@@ -174,7 +192,7 @@ function Settings() {
 
           officeStartTime,
           officeEndTime,
-          gracePeriodMinutes: Number(gracePeriodMinutes),
+          gracePeriodMinutes: gracePeriod,
           workingDays,
         }),
       });
@@ -187,14 +205,14 @@ function Settings() {
         );
       }
 
-      // Second: Change Password if Fields are Filled
+      // STEP 2: Change Password Only If User Entered Password
       if (passwordFieldsFilled) {
         const passwordResponse = await fetch(`${API_URL}/password`, {
           method: "PATCH",
           headers: getAuthHeaders(),
           body: JSON.stringify({
-            currentPassword,
-            newPassword,
+            currentPassword: currentPassword.trim(),
+            newPassword: newPassword.trim(),
           }),
         });
 
@@ -207,24 +225,35 @@ function Settings() {
         }
       }
 
-      // Update UI with Saved Settings
-      const savedSettings = settingsData.settings;
+      // STEP 3: Update UI With Saved Settings
+      const savedSettings = settingsData.settings || settingsData;
 
-      setAdminName(savedSettings.adminName);
-      setAdminEmail(savedSettings.adminEmail);
+      setAdminName(savedSettings.adminName || "Admin");
+      setAdminEmail(savedSettings.adminEmail || "admin@zenhr.com");
 
-      setCompanyName(savedSettings.companyName);
-      setCompanyEmail(savedSettings.companyEmail);
+      setCompanyName(savedSettings.companyName || "ZenHR");
+      setCompanyEmail(savedSettings.companyEmail || "contact@zenhr.com");
 
       setOfficeStartTime(savedSettings.officeStartTime || "09:00");
       setOfficeEndTime(savedSettings.officeEndTime || "18:00");
-      setGracePeriodMinutes(savedSettings.gracePeriodMinutes ?? 15);
-      setWorkingDays(savedSettings.workingDays || DEFAULT_WORKING_DAYS);
 
-      setEmailNotifications(savedSettings.emailNotifications);
-      setLeaveNotifications(savedSettings.leaveNotifications);
+      setGracePeriodMinutes(
+        savedSettings.gracePeriodMinutes ?? 15
+      );
 
-      // Clear Password Fields
+      setWorkingDays(
+        savedSettings.workingDays || DEFAULT_WORKING_DAYS
+      );
+
+      setEmailNotifications(
+        savedSettings.emailNotifications ?? true
+      );
+
+      setLeaveNotifications(
+        savedSettings.leaveNotifications ?? true
+      );
+
+      // STEP 4: Clear Password Fields
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -491,7 +520,8 @@ function Settings() {
 
             <p className="mb-5 text-sm text-gray-500">
               Enter your current password and choose a new password.
-              Minimum 8 characters required.
+              Minimum 8 characters required. Leave all fields empty
+              if you don't want to change your password.
             </p>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
