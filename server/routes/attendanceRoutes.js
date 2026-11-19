@@ -1,6 +1,7 @@
 
 const express = require("express");
 const Attendance = require("../models/Attendance");
+const Settings = require("../models/Settings");
 
 const adminAuth = require("../middleware/adminAuth");
 const employeeReadAuth = require("../middleware/employeeReadAuth");
@@ -9,55 +10,209 @@ const employeeAuth = require("../middleware/employeeAuth");
 const router = express.Router();
 
 // ==========================================
-// HELPER: START AND END OF A DAY
+// COMPANY TIMEZONE
+// ==========================================
+const TIME_ZONE = "Asia/Kolkata";
+const TIME_OFFSET = "+05:30";
+
+// ==========================================
+// HELPER: GET DATE KEY IN COMPANY TIMEZONE
+// ==========================================
+const getDateKey = (date = new Date()) => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const values = {};
+
+  parts.forEach((part) => {
+    if (part.type !== "literal") {
+      values[part.type] = part.value;
+    }
+  });
+
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
+// ==========================================
+// HELPER: CONVERT COMPANY LOCAL TIME TO DATE
+// ==========================================
+const getCompanyDate = (dateKey, time = "00:00") => {
+  return new Date(`${dateKey}T${time}:00${TIME_OFFSET}`);
+};
+
+// ==========================================
+// HELPER: START AND END OF TODAY
 // ==========================================
 const getTodayRange = () => {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
+  const todayKey = getDateKey();
 
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  const start = getCompanyDate(todayKey);
 
-  return { start, end };
+  const tomorrow = new Date(start);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+  return {
+    start,
+    end: tomorrow,
+    dateKey: todayKey,
+  };
 };
 
 // ==========================================
 // HELPER: START AND END OF A MONTH
 // ==========================================
 const getMonthRange = (year, month) => {
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 1);
+  const start = getCompanyDate(
+    `${year}-${String(month).padStart(2, "0")}-01`
+  );
 
-  return { start, end };
+  const nextMonth = new Date(
+    Date.UTC(year, month, 1) - 330 * 60 * 1000
+  );
+
+  return {
+    start,
+    end: nextMonth,
+  };
+};
+
+// ==========================================
+// HELPER: GET OFFICE SETTINGS
+// ==========================================
+const getOfficeSettings = async () => {
+  const settings = await Settings.findOne();
+
+  return {
+    officeStartTime: settings?.officeStartTime || "09:00",
+    officeEndTime: settings?.officeEndTime || "18:00",
+    gracePeriodMinutes: settings?.gracePeriodMinutes ?? 15,
+    workingDays: settings?.workingDays?.length
+      ? settings.workingDays
+      : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+  };
+};
+
+// ==========================================
+// HELPER: GET DAY NAME
+// ==========================================
+const getDayName = (date = new Date()) => {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE,
+    weekday: "long",
+  }).format(date);
+};
+
+// ==========================================
+// HELPER: CHECK WORKING DAY
+// ==========================================
+const isWorkingDay = (date, workingDays) => {
+  const dayName = getDayName(date);
+
+  return workingDays.includes(dayName);
+};
+
+// ==========================================
+// HELPER: GET TIME IN MINUTES
+// ==========================================
+const getTimeInMinutes = (time) => {
+  const [hours, minutes] = time.split(":").map(Number);
+
+  return hours * 60 + minutes;
 };
 
 // ==========================================
 // HELPER: GET ATTENDANCE STATUS
 // ==========================================
-const getAttendanceStatus = (checkInTime) => {
-  const officeStartTime =
-    process.env.OFFICE_START_TIME || "09:30";
+const getAttendanceStatus = (checkInTime, settings) => {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(checkInTime);
 
-  const graceMinutes = Number(
-    process.env.LATE_GRACE_MINUTES || 10
+  const values = {};
+
+  parts.forEach((part) => {
+    if (part.type !== "literal") {
+      values[part.type] = part.value;
+    }
+  });
+
+  const checkInMinutes =
+    Number(values.hour) * 60 + Number(values.minute);
+
+  const officeStartMinutes = getTimeInMinutes(
+    settings.officeStartTime
   );
 
-  const [hours, minutes] = officeStartTime
-    .split(":")
-    .map(Number);
+  const allowedMinutes =
+    officeStartMinutes + settings.gracePeriodMinutes;
 
-  const officeStart = new Date(checkInTime);
-  officeStart.setHours(hours, minutes, 0, 0);
-
-  const allowedCheckInTime = new Date(officeStart);
-
-  allowedCheckInTime.setMinutes(
-    allowedCheckInTime.getMinutes() + graceMinutes
-  );
-
-  return checkInTime <= allowedCheckInTime
+  return checkInMinutes <= allowedMinutes
     ? "Present"
     : "Late";
+};
+
+// ==========================================
+// HELPER: VALIDATE WORKING DAY
+// ==========================================
+const validateWorkingDay = (settings) => {
+  const today = new Date();
+
+  if (!isWorkingDay(today, settings.workingDays)) {
+    return {
+      valid: false,
+      message: "Today is not a company working day",
+    };
+  }
+
+  return { valid: true };
+};
+
+// ==========================================
+// HELPER: CREATE ATTENDANCE
+// ==========================================
+const createAttendance = async (personField, personId) => {
+  const settings = await getOfficeSettings();
+
+  const workingDayValidation = validateWorkingDay(settings);
+
+  if (!workingDayValidation.valid) {
+    return {
+      error: workingDayValidation.message,
+      statusCode: 400,
+    };
+  }
+
+  const { start, end } = getTodayRange();
+
+  const existingAttendance = await Attendance.findOne({
+    [personField]: personId,
+    date: { $gte: start, $lt: end },
+  });
+
+  if (existingAttendance) {
+    return {
+      error: "You have already checked in today",
+      statusCode: 400,
+    };
+  }
+
+  const checkInTime = new Date();
+
+  const attendance = await Attendance.create({
+    [personField]: personId,
+    date: start,
+    checkIn: checkInTime,
+    status: getAttendanceStatus(checkInTime, settings),
+  });
+
+  return { attendance };
 };
 
 // ==========================================
@@ -182,31 +337,20 @@ router.get("/employee/my", employeeAuth, async (req, res) => {
 // ==========================================
 router.post("/employee/my/check-in", employeeAuth, async (req, res) => {
   try {
-    const { start, end } = getTodayRange();
+    const result = await createAttendance(
+      "employee",
+      req.employee._id
+    );
 
-    const existingAttendance = await Attendance.findOne({
-      employee: req.employee._id,
-      date: { $gte: start, $lt: end },
-    });
-
-    if (existingAttendance) {
-      return res.status(400).json({
-        message: "You have already checked in today",
+    if (result.error) {
+      return res.status(result.statusCode).json({
+        message: result.error,
       });
     }
 
-    const checkInTime = new Date();
-
-    const attendance = await Attendance.create({
-      employee: req.employee._id,
-      date: start,
-      checkIn: checkInTime,
-      status: getAttendanceStatus(checkInTime),
-    });
-
     res.status(201).json({
       message: "Check-in successful",
-      attendance,
+      attendance: result.attendance,
     });
   } catch (error) {
     res.status(500).json({
@@ -299,29 +443,15 @@ router.post("/my/check-in", employeeReadAuth, async (req, res) => {
       });
     }
 
-    const { start, end } = getTodayRange();
+    const result = await createAttendance("hr", req.hr._id);
 
-    const existingAttendance = await Attendance.findOne({
-      hr: req.hr._id,
-      date: { $gte: start, $lt: end },
-    });
-
-    if (existingAttendance) {
-      return res.status(400).json({
-        message: "You have already checked in today",
+    if (result.error) {
+      return res.status(result.statusCode).json({
+        message: result.error,
       });
     }
 
-    const checkInTime = new Date();
-
-    const attendance = await Attendance.create({
-      hr: req.hr._id,
-      date: start,
-      checkIn: checkInTime,
-      status: getAttendanceStatus(checkInTime),
-    });
-
-    res.status(201).json(attendance);
+    res.status(201).json(result.attendance);
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -388,29 +518,15 @@ router.post("/check-in", adminAuth, async (req, res) => {
       });
     }
 
-    const { start, end } = getTodayRange();
+    const result = await createAttendance("employee", employeeId);
 
-    const existingAttendance = await Attendance.findOne({
-      employee: employeeId,
-      date: { $gte: start, $lt: end },
-    });
-
-    if (existingAttendance) {
-      return res.status(400).json({
-        message: "Attendance already marked for today",
+    if (result.error) {
+      return res.status(result.statusCode).json({
+        message: result.error,
       });
     }
 
-    const checkInTime = new Date();
-
-    const attendance = await Attendance.create({
-      employee: employeeId,
-      date: start,
-      checkIn: checkInTime,
-      status: getAttendanceStatus(checkInTime),
-    });
-
-    res.status(201).json(attendance);
+    res.status(201).json(result.attendance);
   } catch (error) {
     res.status(500).json({
       message: error.message,
