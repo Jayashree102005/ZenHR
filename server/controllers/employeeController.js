@@ -108,15 +108,18 @@ const createEmployee = async (req, res) => {
             });
         }
 
+        // Generate temporary password
         const temporaryPassword = crypto
             .randomBytes(6)
             .toString("hex");
 
+        // Hash password
         const hashedPassword = await bcrypt.hash(
             temporaryPassword,
             10
         );
 
+        // Create employee first
         const employee = await Employee.create({
             firstName: firstName.trim(),
             lastName: lastName.trim(),
@@ -132,23 +135,60 @@ const createEmployee = async (req, res) => {
             status: "Active",
         });
 
-        await sendEmail({
-            to: normalizedEmail,
-            subject: "Welcome to ZenHR - Your Login Credentials",
-            html: `
-                <div style="font-family: Arial; padding: 24px;">
-                    <h2>Welcome to ZenHR, ${employee.firstName}!</h2>
-                    <p>Your employee account has been created.</p>
-                    <p><strong>Login Email:</strong> ${employee.email}</p>
-                    <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
-                    <p>Please log in and change your temporary password.</p>
-                    <p>Regards,<br/>ZenHR Team</p>
-                </div>
-            `,
-        });
+        // Send welcome email separately
+        let emailSent = false;
 
-        res.status(201).json({
-            message: "Employee created successfully. Credentials sent to email.",
+        try {
+            await sendEmail({
+                to: normalizedEmail,
+                subject: "Welcome to ZenHR - Your Login Credentials",
+                html: `
+                    <div style="font-family: Arial; padding: 24px;">
+                        <h2>Welcome to ZenHR, ${employee.firstName}!</h2>
+
+                        <p>Your employee account has been created.</p>
+
+                        <p>
+                            <strong>Login Email:</strong>
+                            ${employee.email}
+                        </p>
+
+                        <p>
+                            <strong>Temporary Password:</strong>
+                            ${temporaryPassword}
+                        </p>
+
+                        <p>
+                            Please log in and change your temporary password.
+                        </p>
+
+                        <p>Regards,<br/>ZenHR Team</p>
+                    </div>
+                `,
+            });
+
+            emailSent = true;
+
+            console.log(
+                "Welcome email sent successfully:",
+                normalizedEmail
+            );
+
+        } catch (emailError) {
+            console.error(
+                "Welcome Email Failed:",
+                emailError.message
+            );
+        }
+
+        // Return success even if email fails
+        return res.status(201).json({
+            message: emailSent
+                ? "Employee created successfully. Welcome email sent."
+                : "Employee created successfully, but welcome email could not be sent.",
+
+            emailSent,
+
             employee: {
                 _id: employee._id,
                 firstName: employee.firstName,
@@ -163,6 +203,7 @@ const createEmployee = async (req, res) => {
                 status: employee.status,
             },
         });
+
     } catch (error) {
         console.error("Create Employee Error:", error);
 
@@ -172,7 +213,7 @@ const createEmployee = async (req, res) => {
             });
         }
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Error creating employee.",
             error: error.message,
         });
@@ -264,6 +305,7 @@ const loginEmployee = async (req, res) => {
                 joiningDate: employee.joiningDate,
             },
         });
+
     } catch (error) {
         console.error("Employee Login Error:", error.stack || error);
 
@@ -328,6 +370,7 @@ const changeEmployeePassword = async (req, res) => {
         res.status(200).json({
             message: "Password changed successfully.",
         });
+
     } catch (error) {
         console.error("Employee Change Password Error:", error);
 
@@ -424,6 +467,7 @@ const updateEmployee = async (req, res) => {
             message: "Employee updated successfully.",
             employee,
         });
+
     } catch (error) {
         console.error("Update Employee Error:", error);
 
@@ -460,6 +504,7 @@ const deleteEmployee = async (req, res) => {
             message: "Employee deactivated successfully.",
             employee,
         });
+
     } catch (error) {
         console.error("Deactivate Employee Error:", error);
 
@@ -500,6 +545,7 @@ const permanentlyDeleteEmployee = async (req, res) => {
         res.status(200).json({
             message: "Employee and related records permanently deleted.",
         });
+
     } catch (error) {
         console.error("Permanent Delete Employee Error:", error);
 
