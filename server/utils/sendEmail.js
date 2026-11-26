@@ -3,37 +3,49 @@ const nodemailer = require("nodemailer");
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    // Check Gmail credentials
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-      throw new Error("Gmail credentials are missing in environment variables");
+    // Check Mailjet SMTP credentials
+    const {
+      SMTP_HOST,
+      SMTP_PORT,
+      SMTP_USER,
+      SMTP_PASS,
+      MAIL_FROM,
+    } = process.env;
+
+    if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !MAIL_FROM) {
+      throw new Error("Mailjet SMTP environment variables are missing");
     }
 
-    // Gmail SMTP transporter
+    // Mailjet SMTP transporter
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
+      host: SMTP_HOST,
+      port: Number(SMTP_PORT),
       secure: false,
+      requireTLS: true,
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD.replace(/\s/g, ""),
+        user: SMTP_USER,
+        pass: SMTP_PASS,
       },
+      connectionTimeout: 20000,
+      greetingTimeout: 20000,
+      socketTimeout: 30000,
     });
 
     // Send email
     const info = await transporter.sendMail({
-      from: `"ZenHR" <${process.env.GMAIL_USER}>`,
+      from: `"ZenHR" <${MAIL_FROM}>`,
       to,
       subject,
       html,
     });
 
-    console.log("Email sent successfully:", to);
+    console.log("Mailjet email sent successfully:", to);
     console.log("Message ID:", info.messageId);
 
     return info;
 
   } catch (error) {
-    console.error("Gmail Email Error:", error.message);
+    console.error("Mailjet Email Error:", error.message);
     throw error;
   }
 };
