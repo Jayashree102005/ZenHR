@@ -94,14 +94,11 @@ router.put("/:id", employeeReadAuth, updateEmployee);
 // ========================================
 router.delete("/:id", employeeReadAuth, deleteEmployee);
 
-// ========================================
 // PERMANENTLY DELETE EMPLOYEE
-// DELETE /api/employees/:id/permanent
-// Admin only
-// ========================================
+// Admin and HR access
 router.delete(
   "/:id/permanent",
-  adminAuth,
+  employeeReadAuth,
   permanentlyDeleteEmployee
 );
 
