@@ -21,13 +21,25 @@ const {
   permanentlyDeleteEmployee,
 } = require("../controllers/employeeController");
 
+// ========================================
 // EMPLOYEE LOGIN
+// POST /api/employees/login
+// Public route
+// ========================================
 router.post("/login", loginEmployee);
 
+// ========================================
 // EMPLOYEE CHANGE PASSWORD
+// PUT /api/employees/change-password
+// Employee authentication required
+// ========================================
 router.put("/change-password", employeeAuth, changeEmployeePassword);
 
+// ========================================
 // EMPLOYEE MY PROFILE
+// GET /api/employees/my
+// Employee authentication required
+// ========================================
 router.get("/my", employeeAuth, async (req, res) => {
   try {
     const employee = await Employee.findById(req.employee._id)
@@ -54,19 +66,43 @@ router.get("/my", employeeAuth, async (req, res) => {
   }
 });
 
-// GET ALL EMPLOYEES - Admin and HR
+// ========================================
+// GET ALL EMPLOYEES
+// GET /api/employees
+// Admin and HR access
+// ========================================
 router.get("/", employeeReadAuth, getEmployees);
 
-// CREATE EMPLOYEE - Admin and HR
+// ========================================
+// CREATE EMPLOYEE
+// POST /api/employees
+// Admin and HR access
+// ========================================
 router.post("/", employeeReadAuth, createEmployee);
 
-// UPDATE EMPLOYEE - Admin only
-router.put("/:id", adminAuth, updateEmployee);
+// ========================================
+// UPDATE EMPLOYEE
+// PUT /api/employees/:id
+// Admin and HR access
+// ========================================
+router.put("/:id", employeeReadAuth, updateEmployee);
 
-// DEACTIVATE EMPLOYEE - Admin only
-router.delete("/:id", adminAuth, deleteEmployee);
+// ========================================
+// DEACTIVATE EMPLOYEE
+// DELETE /api/employees/:id
+// Admin and HR access
+// ========================================
+router.delete("/:id", employeeReadAuth, deleteEmployee);
 
-// PERMANENTLY DELETE EMPLOYEE - Admin only
-router.delete("/:id/permanent", adminAuth, permanentlyDeleteEmployee);
+// ========================================
+// PERMANENTLY DELETE EMPLOYEE
+// DELETE /api/employees/:id/permanent
+// Admin only
+// ========================================
+router.delete(
+  "/:id/permanent",
+  adminAuth,
+  permanentlyDeleteEmployee
+);
 
 module.exports = router;
